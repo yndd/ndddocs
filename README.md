@@ -1,6 +1,5 @@
 <p align=center><a href="https://nddocs.yndd.io"><img src=https://gitlab.com/rdodin/pics/-/wikis/uploads/9f2e581a8d207a21ff024a312679a239/containerlab_export_white_ink_3?sanitize=true/></a></p>
 
-[![github release](https://img.shields.io/github/release/yndd/ndddocs.svg?style=flat-square&color=00c9ff&labelColor=bec8d2)](https://github.com/yndd/ndddocs/releases)
 [![Twitter Follow](https://img.shields.io/twitter/follow/yndd.svg?style=social&label=Follow)](https://twitter.com/intent/follow?screen_name=yndd&user_id=1434394355385651201)
 
 ## Overview
