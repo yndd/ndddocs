@@ -1,10 +1,14 @@
 site_name: NDD docs
 nav:
   - Home: index.md
-  - Quick start: 
+  - Quick start Ndd: 
     - Install ndd: start/install.md
     - Provision a network device: start/provision.md
     - Uninstall ndd: start/uninstall.md
+  - Quick start nddo:
+    - Install nddo: start/install-nddo.md
+    - Provision nddo registers: start/provision-nddo-registers.md
+    - Provision nddo intents: start/provision-nddo-intents.md
   - Examples: examples/examples.md
   - Concepts:
     - Architecture: concepts/architecture.md
