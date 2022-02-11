@@ -210,7 +210,7 @@ A ndd managed resource has the following attributes:
 file int-e1-49.yaml
 
 ```
-apiVersion: srl.ndd.yndd.io/v1
+apiVersion: srl.ndd.yndd.io/v1alpha1
 kind: SrlInterface
 metadata:
   name: int-e1-49
@@ -219,12 +219,11 @@ spec:
   active: true
   networkNodeRef: 
     name: leaf1
-  forNetworkNode:
-    interface:
-      name: "ethernet-1/49"
-      admin-state: "enable"
-      description: "ndd-ethernet-1/49"
-      vlan-tagging: true
+  interface:
+    name: "ethernet-1/49"
+    admin-state: "enable"
+    description: "ndd-ethernet-1/49"
+    vlan-tagging: true
 ```
 
 ```
@@ -234,27 +233,26 @@ kubectl apply -f int-e1-49.yaml
 file subint-e1-49-0.yaml 
 
 ```
-apiVersion: srl.ndd.yndd.io/v1
+apiVersion: srl.nddp.yndd.io/v1alpha1
 kind: SrlInterfaceSubinterface
 metadata:
   name: subint-e1-49-0
   namespace: default
 spec:
   active: true
-  networkNodeRef: 
+  networkNodeRef:
     name: leaf1
-  forNetworkNode:
-    interface-name: ethernet-1/49
-    subinterface:
+  interface-name: ethernet-1/49
+  subinterface:
       index: 1
       type: routed
       admin-state: enable
       description: "ndd-e1-49-0-leaf1"
       ipv4:
-        address: 
+        address:
         - ip-prefix: 100.64.0.0/31
       ipv6:
-        address: 
+        address:
         - ip-prefix: 3100:64::/127
       vlan:
         encap:
