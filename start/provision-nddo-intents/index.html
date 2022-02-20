@@ -5,7 +5,14 @@ metadata:
   namespace: default
 spec:
   infrastructure:
-    network-instance-name: default-routed
+    network-instance-name: default
+    as: 65555
+    as-pool:
+      start: 65000
+      end: 65400
+    cidr:
+      loopback-cidr-ipv4: &quot;100.64.0.0/24&quot;
+      loopback-cidr-ipv6: &quot;1000:64::/64&quot;
     admin-state: enable
     addressing-scheme: dual-stack
     underlay-protocol:
@@ -15,24 +22,7 @@ spec:
 </code></pre></div> <p>show status</p> <div class=highlight><pre><span></span><code>k get infrastructures.infra.nddo.yndd.io
 NAME                  SYNC   STATUS   ORG     DEP       AZ    NI               ADDR         UNDERLAY   OVERLAY   AGE
 nokia.region1.infra   True   True     nokia   region1         default-routed   dual-stack   ebgp       evpn      23s
-</code></pre></div> <p>this should result in the network instances and interfaces created in the adaptor layer</p> <div class=highlight><pre><span></span><code>k get interfaces.network.ndda.yndd.io
-NAME                                                            AGE
-nokia.region1.infrastructure.infra.leaf1-int-1-1-49-interface   94s
-nokia.region1.infrastructure.infra.leaf1-int-1-1-50-interface   94s
-nokia.region1.infrastructure.infra.leaf1-irb-irb                94s
-nokia.region1.infrastructure.infra.leaf1-lag-50-interface       94s
-nokia.region1.infrastructure.infra.leaf1-system-system          94s
-nokia.region1.infrastructure.infra.leaf1-vxlan-vxlan            94s
-nokia.region1.infrastructure.infra.leaf2-int-1-1-49-interface   94s
-nokia.region1.infrastructure.infra.leaf2-int-1-1-50-interface   94s
-nokia.region1.infrastructure.infra.leaf2-irb-irb                94s
-nokia.region1.infrastructure.infra.leaf2-lag-50-interface       94s
-nokia.region1.infrastructure.infra.leaf2-system-system          94s
-nokia.region1.infrastructure.infra.leaf2-vxlan-vxlan            94s
-</code></pre></div> <div class=highlight><pre><span></span><code>k get networkinstances.network.ndda.yndd.io
-NAME                                       AGE
-nokia.region1.infrastructure.infra.leaf1   108s
-nokia.region1.infrastructure.infra.leaf2   108s
+</code></pre></div> <p>this should result in the network instances and interfaces created in the nddp-layer</p> <div class=highlight><pre><span></span><code>k get srl2
 </code></pre></div> <h2 id=endpoint-groups>endpoint groups<a class=headerlink href=#endpoint-groups title="Permanent link">#</a></h2> <p>server pods</p> <div class=highlight><pre><span></span><code>apiVersion: epg.nddo.yndd.io/v1alpha1
 kind: EpGroup
 metadata:
@@ -53,14 +43,7 @@ spec:
 NAME                        SYNC   STATUS   ORG     DEP       AZ    EPGNAME       DEPL   AGE
 nokia.region1.dcgw          True   True     nokia   region1         dcgw                 72s
 nokia.region1.server-pod1   True   True     nokia   region1         server-pod1          72s
-</code></pre></div> <p>This shoudl result in additional interfaces created in the adaptor layer</p> <div class=highlight><pre><span></span><code> k get interfaces.network.ndda.yndd.io
-NAME                                                            AGE
-nokia.region1.epgroup.dcgw.leaf1-int-1-1-48-interface           118s
-nokia.region1.epgroup.dcgw.leaf2-int-1-1-48-interface           118s
-nokia.region1.epgroup.server-pod1.leaf1-int-1-1-1-interface     118s
-nokia.region1.epgroup.server-pod1.leaf1-lag-1-interface         118s
-nokia.region1.epgroup.server-pod1.leaf2-int-1-1-1-interface     118s
-nokia.region1.epgroup.server-pod1.leaf2-lag-1-interface         118s
+</code></pre></div> <p>This shoudl result in additional interfaces created in the adaptor layer</p> <div class=highlight><pre><span></span><code> k get srl2
 </code></pre></div> <h2 id=vpc>vpc<a class=headerlink href=#vpc title="Permanent link">#</a></h2> <div class=highlight><pre><span></span><code>apiVersion: vpc.nddo.yndd.io/v1alpha1
 kind: Vpc
 metadata:
@@ -76,7 +59,7 @@ spec:
       - tag:
           - {key: kind, value: epg}
           - {key: endpoint-group, value: server-pod1}
-        vlan: 10
+        outer-vlan-id: 10
 </code></pre></div> <div class=highlight><pre><span></span><code>apiVersion: vpc.nddo.yndd.io/v1alpha1
 kind: Vpc
 metadata:
@@ -97,7 +80,7 @@ spec:
       - tag:
         - {key: kind, value: epg}
         - {key: endpoint-group, value: server-pod1}
-        vlan: 40
+        outer-vlan-id: 40
     routing-tables:
     - name: infrastructure
       tunnel: vxlan
@@ -112,47 +95,72 @@ spec:
         - {key: leaf1, value: int-1/1/48}
         ipv4-prefixes: [100.112.10.1/31]
         ipv6-prefixes: [2a02:1800:80:7050::1/64]
-        vlan: 10
+        outer-vlan-id: 10
       - tag:
         - {key: kind, value: node-itfce}
         - {key: leaf2, value: int-1/1/48}
         ipv4-prefixes: [100.112.10.3/31]
         ipv6-prefixes: [2a02:1800:80:7051::1/64]
-        vlan: 11
-</code></pre></div> <p>show status</p> <div class=highlight><pre><span></span><code>k get vpcs.vpc.nddo.yndd.io
-NAME                  SYNC   STATUS   ORG     DEP       AZ    VPC             AGE
-nokia.region1.infra   True   True     nokia   region1         infra           8s
-nokia.region1.prov    True   True     nokia   region1         prov            13s
-</code></pre></div> <p>this shoudl result in additional network instances and subinterface creation in the adaptor layer</p> <div class=highlight><pre><span></span><code>k get subinterfaces.network.ndda.yndd.io
-NAME                                                       AGE
-nokia.region1.infrastructure.infra.leaf1-lag-50-0-routed   6m57s
-nokia.region1.infrastructure.infra.leaf1-system-0-routed   6m57s
-nokia.region1.infrastructure.infra.leaf2-lag-50-0-routed   6m57s
-nokia.region1.infrastructure.infra.leaf2-system-0-routed   6m57s
-nokia.region1.vpc.infra.leaf1-int-1-1-48-10-routed         98s
-nokia.region1.vpc.infra.leaf1-irb-12303-routed             98s
-nokia.region1.vpc.infra.leaf1-irb-2303-bridged             98s
-nokia.region1.vpc.infra.leaf1-lag-1-40-bridged             98s
-nokia.region1.vpc.infra.leaf1-vxlan-2241-routed            98s
-nokia.region1.vpc.infra.leaf1-vxlan-2303-bridged           98s
-nokia.region1.vpc.infra.leaf2-int-1-1-48-11-routed         98s
-nokia.region1.vpc.infra.leaf2-irb-12303-routed             98s
-nokia.region1.vpc.infra.leaf2-irb-2303-bridged             98s
-nokia.region1.vpc.infra.leaf2-lag-1-40-bridged             98s
-nokia.region1.vpc.infra.leaf2-vxlan-2241-routed            98s
-nokia.region1.vpc.infra.leaf2-vxlan-2303-bridged           98s
-nokia.region1.vpc.prov.leaf1-lag-1-10-bridged              103s
-nokia.region1.vpc.prov.leaf1-vxlan-2085-bridged            103s
-nokia.region1.vpc.prov.leaf2-lag-1-10-bridged              103s
-nokia.region1.vpc.prov.leaf2-vxlan-2085-bridged            103s
-</code></pre></div> <div class=highlight><pre><span></span><code>k get networkinstances.network.ndda.yndd.io
-NAME                                       AGE
-nokia.region1.infrastructure.infra.leaf1   7m18s
-nokia.region1.infrastructure.infra.leaf2   7m18s
-nokia.region1.vpc.infra.leaf1              119s
-nokia.region1.vpc.infra.leaf2              119s
-nokia.region1.vpc.prov.leaf1               2m4s
-nokia.region1.vpc.prov.leaf2               2m4s
+        outer-vlan-id: 11
+</code></pre></div> <div class=highlight><pre><span></span><code>apiVersion: vpc.nddo.yndd.io/v1alpha1
+kind: Vpc
+metadata:
+  name: nokia.region1.multus
+  namespace: default
+spec:
+  vpc:
+    defaults:
+      tunnel: vxlan
+      protocol: evpn
+    admin-state: enable
+    description: vpc for multus
+    bridge-domains:
+    - name: multus-ipvlan
+      interface-selector:
+      - tag:
+        - {key: kind, value: epg}
+        - {key: endpoint-group, value: server-pod1}
+        - {key: itfce-kind, value: ipvlan}
+        outer-vlan-id: 100
+    - name: multus-sriov4
+      interface-selector:
+      - tag:
+        - {key: kind, value: epg}
+        - {key: endpoint-group, value: server-pod1}
+        - {key: itfce-kind, value: sriov1}
+        outer-vlan-id: 200
+    - name: multus-sriov55
+      interface-selector:
+      - tag:
+        - {key: kind, value: epg}
+        - {key: endpoint-group, value: server-pod1}
+        - {key: itfce-kind, value: sriov2}
+        outer-vlan-id: 102
+    routing-tables:
+    - name: multus
+      bridge-domains:
+      - name: multus-ipvlan2
+        ipv4-prefixes: [100.112.1.3/24]
+        ipv6-prefixes: [2a02:1800:81:8000::/64]
+      - name: multus-sriov12
+        ipv4-prefixes: [100.112.2.0/24]
+        ipv6-prefixes: [2a02:1800:82:7000::/64]
+      - name: multus-sriov2
+        ipv4-prefixes: [100.112.3.0/24]
+        ipv6-prefixes: [2a02:1800:83:7000::/64]
+      interface-selector:
+      - tag:
+        - {key: kind, value: node-itfce}
+        - {key: leaf1, value: int-1/1/48}
+        ipv4-prefixes: [100.112.10.1/31]
+        ipv6-prefixes: [2a02:1800:80:7050::1/64]
+        outer-vlan-id: 100
+      - tag:
+        - {key: kind, value: node-itfce}
+        - {key: leaf2, value: int-1/1/48}
+        ipv4-prefixes: [100.112.10.3/31]
+        ipv6-prefixes: [2a02:1800:80:7050::3/64]
+        outer-vlan-id: 110
 </code></pre></div> <!-- Content footer --> <footer class="mdx-content__footer md-typeset"> <hr> <span class=twemoji> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 448 512"><path d="M437.2 403.5 320 215V64h8c13.3 0 24-10.7 24-24V24c0-13.3-10.7-24-24-24H120c-13.3 0-24 10.7-24 24v16c0 13.3 10.7 24 24 24h8v151L10.8 403.5C-18.5 450.6 15.3 512 70.9 512h306.2c55.7 0 89.4-61.5 60.1-108.5zM137.9 320l48.2-77.6c3.7-5.2 5.8-11.6 5.8-18.4V64h64v160c0 6.9 2.2 13.2 5.8 18.4l48.2 77.6h-172z"/></svg> </span> <hr> </footer> </article> </div> </div> <a href=# class="md-top md-icon" data-md-component=top data-md-state=hidden> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"/></svg> Back to top </a> </main> <!--
   Copyright (c) 2016-2021 Martin Donath <martin.donath@squidfunk.com>
   Permission is hereby granted, free of charge, to any person obtaining a copy
