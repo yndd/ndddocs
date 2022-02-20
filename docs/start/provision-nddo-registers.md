@@ -296,111 +296,9 @@ nokia.region1.fabric1.logical-sh-link-leaf1-lag-50-leaf2-lag-50   True   True   
 
 ```
 
-## Configure the ipam registry
-
-### ipam
-
-```
-apiVersion: ipam.nddr.yndd.io/v1alpha1
-kind: Ipam
-metadata:
-  name: nokia-default
-  namespace: default
-spec:
-  oda:
-  - key: organization
-    value: nokia
-  ipam:
-    admin-state: enable
-```
-
-### network-instance
-
-the name structure is important to comply to odns framework
-
-```
-apiVersion: ipam.nddr.yndd.io/v1alpha1
-kind: IpamNetworkInstance
-metadata:
-  name: nokia.region1.infrastructure.infra.nokia-default.default-routed
-  namespace: default
-spec:
-  network-instance:
-    admin-state: enable
-    description: "default network instance"
-    default-prefix-length:
-      isl:
-        address-family:
-          ipv4: 31
-          ipv6: 127
-      loopback:
-        address-family:
-          ipv4: 32
-          ipv6: 128
-```
-
-### prefixes for isl and looopbacks
-
-the name structure is important to comply to odns framework
-
-```
-apiVersion: ipam.nddr.yndd.io/v1alpha1
-kind: IpamNetworkInstanceIpPrefix
-metadata:
-  name: nokia.region1.infrastructure.infra.nokia-default.default-routed.isl-ipv4
-  namespace: default
-spec:
-  ip-prefix:
-    prefix: 100.64.0.0/16
-    tag:
-    - key: purpose
-      value: isl
-```
-
-```
-apiVersion: ipam.nddr.yndd.io/v1alpha1
-kind: IpamNetworkInstanceIpPrefix
-metadata:
-  name: nokia.region1.infrastructure.infra.nokia-default.default-routed.isl-ipv6
-  namespace: default
-spec:
-  ip-prefix:
-    prefix: 3100:100::/48
-    tag:
-    - key: purpose
-      value: isl
-```
-
-```
-apiVersion: ipam.nddr.yndd.io/v1alpha1
-kind: IpamNetworkInstanceIpPrefix
-metadata:
-  name: nokia.region1.infrastructure.infra.nokia-default.default-routed.lpbk-ipv4
-  namespace: default
-spec:
-  ip-prefix:
-    prefix: 100.112.100.0/24
-    tag:
-    - key: purpose
-      value: loopback
-
-```
-
-```
-apiVersion: ipam.nddr.yndd.io/v1alpha1
-kind: IpamNetworkInstanceIpPrefix
-metadata:
-  name: nokia.region1.infrastructure.infra.nokia-default.default-routed.lpbk-ipv6
-  namespace: default
-spec:
-  ip-prefix:
-    prefix: 2000::/64
-    tag:
-    - key: purpose
-      value: loopback
-```
-
 ## Configure the ni registry
+
+The ni registry helps to allocate unique identifiers for the vpc when using irb constructs and are used for vxlan and irb identifiers
 
 ```
 apiVersion: ni.nddr.yndd.io/v1alpha1
@@ -426,34 +324,4 @@ k get registries.ni.nddr.yndd.io
 ```
 NAME            SYNC   STATUS   ORG     DEP       AZ        REGISTRY        ALLOCATED   AVAILABLE   TOTAL   AGE
 nokia-default   True   True     nokia   unknown   unknown   nokia-default   0           10000       10000   23s
-```
-
-## Configure the as registry
-
-```
-apiVersion: as.nddr.yndd.io/v1alpha1
-kind: Registry
-metadata:
-  name: nokia-default
-  namespace: default
-spec:
-  oda:
-  - key: organization
-    value: nokia
-  registry:
-    description: deterministic global AS pool
-    allocation-strategy: deterministic
-    start: 65100
-    end: 65199
-```
-
-show the registry status
-
-```
-k get registries.as.nddr.yndd.io
-```
-
-```
-NAME            SYNC   STATUS   ORG     DEP       AZ        REGISTRY        STRATEGY        START   END     ALLOCATED   AVAILABLE   TOTAL   AGE
-nokia-default   True   True     nokia   unknown   unknown   nokia-default   deterministic   65100   65199   0           100         100     2m24s
 ```

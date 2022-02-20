@@ -12,9 +12,7 @@ There are 5 registries right now
 
 - org-registry
 - topo-registry
-- ipam-registry
 - ni-registry
-- as-registry
 
 ### org-registry
 
@@ -100,93 +98,6 @@ NAME                                              READY   STATUS    RESTARTS   A
 nddr-ni-registry-4a71a2c372d0-74589448f6-nw8hl    2/2     Running             0          7s
 ```
 
-### as-registry
-
-create a file nddr-package-as-registry.yaml with the following content
-
-```
-apiVersion: pkg.ndd.yndd.io/v1
-kind: Intent
-metadata:
-  name: nddr-as-registry
-  namespace: ndd-system
-spec:
-  package: yndd/nddr-as-registry:latest
-  packagePullPolicy: Always
-```
-
-```
-kubectl apply -f nddr-package-as-registry.yaml
-```
-
-after this command a pod should be create like this
-
-```
-k get pods -n ndd-system -w
-NAME                                              READY   STATUS    RESTARTS   AGE
-...
-nddr-as-registry-5d7fa458ac98-544588b5cf-66w2z    2/2     Running             0          6s
-```
-
-### ipam-registry
-
-create a file nddr-package-ipam-registry.yaml with the following content
-
-```
-apiVersion: pkg.ndd.yndd.io/v1
-kind: Intent
-metadata:
-  name: nddr-ipam-registry
-  namespace: ndd-system
-spec:
-  package: yndd/nddr-ipam-registry:latest
-  packagePullPolicy: Always
-```
-
-```
-kubectl apply -f nddr-package-ipam-registry.yaml
-```
-
-after this command a pod should be create like this
-
-```
-k get pods -n ndd-system -w
-NAME                                              READY   STATUS    RESTARTS   AGE
-...
-nddr-as-registry-5d7fa458ac98-544588b5cf-66w2z    2/2     Running             0          6s
-```
-
-## Install nddo adaptors
-
-install the adaptation layer which is used by the Intents to create the abstract data structures
-
-### ndda-network
-
-create a file ndda-package-network.yaml with the following content
-
-```
-apiVersion: pkg.ndd.yndd.io/v1
-kind: Intent
-metadata:
-  name: ndda-network
-  namespace: ndd-system
-spec:
-  package: yndd/ndda-adaptor-network:latest
-  packagePullPolicy: Always
-```
-
-```
-kubectl apply -f ndda-package-network.yaml
-```
-
-after this command a pod should be create like this
-
-```
-k get pods -n ndd-system -w
-NAME                                              READY   STATUS    RESTARTS   AGE
-...
-ndda-network-0f7367906ec0-6f84898f65-8f8c8         2/2     Running             0          6s
-```
 
 ## Install nddo Intents
 
@@ -248,5 +159,33 @@ after this command a pod should be create like this
 k get pods -n ndd-system -w
 NAME                                              READY   STATUS    RESTARTS   AGE
 ...
-nddo-infra-0f86fd936790-5bbdbc9f85-l7tgp           2/2     Running             0          6s
+nddo-epgroup-ebcddb8968e5-77756f9fbb-jrnl4         2/2     Running             0          6s
+```
+
+### nddo-vpc
+
+create a file nddo-package-vpc.yaml with the following content
+
+```
+apiVersion: pkg.ndd.yndd.io/v1
+kind: Intent
+metadata:
+  name: nddo-vpc
+  namespace: ndd-system
+spec:
+  package: yndd/nddo-intent-vpc:latest
+  packagePullPolicy: Always
+```
+
+```
+kubectl apply -f nddo-package-vpc.yaml
+```
+
+after this command a pod should be create like this
+
+```
+k get pods -n ndd-system -w
+NAME                                              READY   STATUS    RESTARTS   AGE
+...
+nddo-vpc-8b8d4ae0e44c-7d4bd6b589-jg49s             2/2     Running             0          6s
 ```

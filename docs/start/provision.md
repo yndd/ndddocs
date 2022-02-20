@@ -1,14 +1,91 @@
 # Provision
 
-NDD allow to provision a network device through kubernetes using a network node device (nn) driver and a ndd-provider. 
+NDD allow to provision a network device through kubernetes using a provider. 
 
-The network node device driver interacts with the device through GNMI and provides a caching layer between the network device and the provider.
+The provider interacts with the device through GNMI and implements a caching layer for robust operations between kubernetes and the network device. 
 
-The ndd-provider installs the configuration parameters in a declaritive way to the network device, through the network node device driver.
+The provider installs the configuration parameters in a declaritive way to the network device and ensure the k8s crds are synchronized with the device.
 
+## Install the Provider
+
+Install a provider which exposes the network device configuration through the kubernetes API.
+
+Create a  nddp-package-srl.yaml file, which provides:
+- name of the provider: nddp-srl
+- package name: yndd/nddp-srl:latest
+
+file nddp-package-srl.yaml
+
+```
+apiVersion: pkg.ndd.yndd.io/v1
+kind: Provider
+metadata:
+  name: nddp-srl
+  namespace: ndd-system
+spec:
+  package: yndd/nddp-srl:latest
+  packagePullPolicy: Always
+```
+
+apply the provider to the cluster
+
+to see the installation of the provider you can use:
+
+```
+watch kubectl get pkg
+```
+
+After this step is successfull you should see the provider pod running in the ndd-system namespace
+
+```
+kubectl get pods -n ndd-system
+```
+
+```
+NAME                                             READY   STATUS    RESTARTS   AGE
+ndd-core-5dd5b5c679-6hkvw                        2/2     Running   0          51m
+ndd-dep-leaf1-5bf7b6b89f-ncd8x                   1/1     Running   0          30m
+nddp-srl-51ef00fd88c2-98fb57465-lm5td            2/2     Running   0          4m3s
+ndd-rbac-6d8d68dbbc-58rnt                        2/2     Running   0          51m
+```
+
+Also you should see a number of CRDs being installed in the cluster which are owned by the provider you installed.
+
+```
+kubectl get crd | grep srl
+```
+
+```
+srlbfds.srl.nddp.yndd.io                                                    2022-02-09T14:48:28Z
+srlinterfaces.srl.nddp.yndd.io                                              2022-02-09T14:48:28Z
+srlinterfacesubinterfaces.srl.nddp.yndd.io                                  2022-02-09T14:48:28Z
+srlnetworkinstanceaggregateroutes.srl.nddp.yndd.io                          2022-02-09T14:48:28Z
+srlnetworkinstancenexthopgroups.srl.nddp.yndd.io                            2022-02-09T14:48:28Z
+srlnetworkinstanceprotocolsbgpevpns.srl.nddp.yndd.io                        2022-02-09T14:48:28Z
+srlnetworkinstanceprotocolsbgps.srl.nddp.yndd.io                            2022-02-09T14:48:28Z
+srlnetworkinstanceprotocolsbgpvpns.srl.nddp.yndd.io                         2022-02-09T14:48:28Z
+srlnetworkinstanceprotocolsises.srl.nddp.yndd.io                            2022-02-09T14:48:28Z
+srlnetworkinstanceprotocolslinuxes.srl.nddp.yndd.io                         2022-02-09T14:48:28Z
+srlnetworkinstanceprotocolsospfs.srl.nddp.yndd.io                           2022-02-09T14:48:28Z
+srlnetworkinstances.srl.nddp.yndd.io                                        2022-02-09T14:48:28Z
+srlnetworkinstancestaticroutes.srl.nddp.yndd.io                             2022-02-09T14:48:28Z
+srlroutingpolicyaspathsets.srl.nddp.yndd.io                                 2022-02-09T14:48:28Z
+srlroutingpolicycommunitysets.srl.nddp.yndd.io                              2022-02-09T14:48:28Z
+srlroutingpolicypolicies.srl.nddp.yndd.io                                   2022-02-09T14:48:29Z
+srlroutingpolicyprefixsets.srl.nddp.yndd.io                                 2022-02-09T14:48:29Z
+srlsystemnames.srl.nddp.yndd.io                                             2022-02-09T14:48:29Z
+srlsystemnetworkinstanceprotocolsbgpvpns.srl.nddp.yndd.io                   2022-02-09T14:48:29Z
+srlsystemnetworkinstanceprotocolsevpnesisbgpinstanceesis.srl.nddp.yndd.io   2022-02-09T14:48:29Z
+srlsystemnetworkinstanceprotocolsevpnesisbgpinstances.srl.nddp.yndd.io      2022-02-09T14:48:29Z
+srlsystemnetworkinstanceprotocolsevpns.srl.nddp.yndd.io                     2022-02-09T14:48:29Z
+srlsystemntps.srl.nddp.yndd.io                                              2022-02-09T14:48:29Z
+srltransactions.srl.nddp.yndd.io                                            2022-02-13T20:38:49Z
+srltunnelinterfaces.srl.nddp.yndd.io                                        2022-02-09T14:48:29Z
+srltunnelinterfacevxlaninterfaces.srl.nddp.yndd.io                          2022-02-09T14:48:29Z
+```
 ## Setup a network node device driver
 
-To setup the network node device driver we first need to configure a network node and optionally device driver parameters.
+To setup the network node device we first need to configure a network node.
 
 ### Setup a secret
 
@@ -69,120 +146,7 @@ apply the network node configuration to the cluster
 networknode.dvr.ndd.yndd.io/leaf1 unchanged
 ```
 
-After the creation of the network node we should see:
-
-- a new pod appear in the cluster which is providing the caching function between the network device and the ndd-provider
-- the network node state should be HEALTHY: True, CONFIGURED: True, READY: False. READY state is false because the provider is not yet installed and registered to the network node device driver.
-
-Pods in ndd-system namespace
-
-```
-kubectl  get pods -n ndd-system
-```
-
-```
-NAME                             READY   STATUS    RESTARTS   AGE
-ndd-core-5dd5b5c679-6hkvw        2/2     Running   0          38m
-ndd-dep-leaf1-5bf7b6b89f-ncd8x   1/1     Running   0          17m
-ndd-rbac-6d8d68dbbc-58rnt        2/2     Running   0          38m
-```
-
-Network node status:
-
-```
-kubectl get nn
-```
-
-```
-NAME    HEALTHY   CONFIGURED   READY   ADDRESS             CONN-KIND   TYPE   KIND   SWVERSION   MACADDRESS   SERIALNBR   GRPCSERVERPORT   AGE
-leaf1   True      True         False   172.20.20.5:57400   gnmi                                                           9999             19m
-```
-
-## Install the Provider
-
-Install a provider which exposes the network device configuration through the kubernetes API.
-
-Create a nddsrlpackage.yaml file, which provides:
-- name of the provider: ndd-provider-srl
-- package name: yndd/ndd-provider-srl:latest
-
-file nddsrlpackage.yaml
-
-```
-apiVersion: pkg.ndd.yndd.io/v1
-kind: Provider
-metadata:
-  name: ndd-provider-srl
-  namespace: ndd-system
-spec:
-  package: yndd/ndd-provider-srl:latest
-  packagePullPolicy: Always
-```
-
-apply the provider to the cluster
-
-```
-kubectl apply -f nddsrlsecret.yaml
-secret/srl-secrets created
-```
-
-to see the installation of the provider you can use:
-
-```
-watch kubectl get pkg
-```
-
-After this step is successfull you should see the provider pod running in the ndd-system namespace
-
-```
-kubectl get pods -n ndd-system
-```
-
-```
-NAME                                             READY   STATUS    RESTARTS   AGE
-ndd-core-5dd5b5c679-6hkvw                        2/2     Running   0          51m
-ndd-dep-leaf1-5bf7b6b89f-ncd8x                   1/1     Running   0          30m
-ndd-provider-srl-67b9e61445f6-846cb5c64c-t2w9h   1/1     Running   0          2m35s
-ndd-rbac-6d8d68dbbc-58rnt                        2/2     Running   0          51m
-```
-
-Also you should see a number of CRDs being installed in the cluster which are owned by the provider you installed.
-
-```
-kubectl get crd | grep srl
-```
-
-```
-registrations.srl.ndd.yndd.io                                              2021-09-05T12:23:01Z
-srlbfds.srl.ndd.yndd.io                                                    2021-09-05T12:23:01Z
-srlinterfaces.srl.ndd.yndd.io                                              2021-09-05T12:23:01Z
-srlinterfacesubinterfaces.srl.ndd.yndd.io                                  2021-09-05T12:23:01Z
-srlnetworkinstanceaggregateroutes.srl.ndd.yndd.io                          2021-09-05T12:23:01Z
-srlnetworkinstancenexthopgroups.srl.ndd.yndd.io                            2021-09-05T12:23:01Z
-srlnetworkinstanceprotocolsbgpevpns.srl.ndd.yndd.io                        2021-09-05T12:23:01Z
-srlnetworkinstanceprotocolsbgps.srl.ndd.yndd.io                            2021-09-05T12:23:01Z
-srlnetworkinstanceprotocolsbgpvpns.srl.ndd.yndd.io                         2021-09-05T12:23:01Z
-srlnetworkinstanceprotocolsises.srl.ndd.yndd.io                            2021-09-05T12:23:01Z
-srlnetworkinstanceprotocolslinuxes.srl.ndd.yndd.io                         2021-09-05T12:23:01Z
-srlnetworkinstanceprotocolsospfs.srl.ndd.yndd.io                           2021-09-05T12:23:01Z
-srlnetworkinstances.srl.ndd.yndd.io                                        2021-09-05T12:23:01Z
-srlnetworkinstancestaticroutes.srl.ndd.yndd.io                             2021-09-05T12:23:01Z
-srlroutingpolicyaspathsets.srl.ndd.yndd.io                                 2021-09-05T12:23:01Z
-srlroutingpolicycommunitysets.srl.ndd.yndd.io                              2021-09-05T12:23:01Z
-srlroutingpolicypolicies.srl.ndd.yndd.io                                   2021-09-05T12:23:02Z
-srlroutingpolicyprefixsets.srl.ndd.yndd.io                                 2021-09-05T12:23:02Z
-srlsystemmtus.srl.ndd.yndd.io                                              2021-09-05T12:23:02Z
-srlsystemnames.srl.ndd.yndd.io                                             2021-09-05T12:23:02Z
-srlsystemnetworkinstanceprotocolsbgpvpns.srl.ndd.yndd.io                   2021-09-05T12:23:02Z
-srlsystemnetworkinstanceprotocolsevpnesisbgpinstanceesis.srl.ndd.yndd.io   2021-09-05T12:23:02Z
-srlsystemnetworkinstanceprotocolsevpnesisbgpinstances.srl.ndd.yndd.io      2021-09-05T12:23:02Z
-srlsystemnetworkinstanceprotocolsevpns.srl.ndd.yndd.io                     2021-09-05T12:23:02Z
-srlsystemntps.srl.ndd.yndd.io                                              2021-09-05T12:23:02Z
-srltunnelinterfaces.srl.ndd.yndd.io                                        2021-09-05T12:23:02Z
-srltunnelinterfacevxlaninterfaces.srl.ndd.yndd.io                          2021-09-05T12:23:02Z
-```
-
-When the provider and the network device type matches you should see the network node becoming in ready status and you should see that the network node discovered additional parameters of the network device, such as sw version ,type, etc
+When the provider and the network device type matches you should see the network node becoming in ready status and you should see that the network node got discovered with additional parameters of the network device, such as sw version ,type, etc
 
 ```
 kubectl get nn
@@ -210,14 +174,18 @@ A ndd managed resource has the following attributes:
 file int-e1-49.yaml
 
 ```
+<<<<<<< HEAD
 apiVersion: srl.ndd.yndd.io/v1alpha1
+=======
+apiVersion: srl.nddp.yndd.io/v1alpha1
+>>>>>>> d896e49 (added some new docs)
 kind: SrlInterface
 metadata:
   name: int-e1-49
   namespace: default
 spec:
   active: true
-  networkNodeRef: 
+  networkNodeRef:
     name: leaf1
   interface:
     name: "ethernet-1/49"
@@ -244,6 +212,7 @@ spec:
     name: leaf1
   interface-name: ethernet-1/49
   subinterface:
+<<<<<<< HEAD
       index: 1
       type: routed
       admin-state: enable
@@ -258,6 +227,22 @@ spec:
         encap:
           single-tagged:
             vlan-id: "1"
+=======
+    index: 1
+    type: routed
+    admin-state: enable
+    description: "ndd-e1-49-0-leaf1"
+    ipv4:
+      address:
+      - ip-prefix: 100.64.0.0/31
+    ipv6:
+      address:
+      - ip-prefix: 3100:64::/127
+    vlan:
+      encap:
+        single-tagged:
+          vlan-id: "1"
+>>>>>>> d896e49 (added some new docs)
 
 ```
 
