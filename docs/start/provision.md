@@ -212,7 +212,6 @@ spec:
     name: leaf1
   interface-name: ethernet-1/49
   subinterface:
-<<<<<<< HEAD
       index: 1
       type: routed
       admin-state: enable
@@ -227,23 +226,6 @@ spec:
         encap:
           single-tagged:
             vlan-id: "1"
-=======
-    index: 1
-    type: routed
-    admin-state: enable
-    description: "ndd-e1-49-0-leaf1"
-    ipv4:
-      address:
-      - ip-prefix: 100.64.0.0/31
-    ipv6:
-      address:
-      - ip-prefix: 3100:64::/127
-    vlan:
-      encap:
-        single-tagged:
-          vlan-id: "1"
->>>>>>> d896e49 (added some new docs)
-
 ```
 
 ```
@@ -257,30 +239,30 @@ info from running / interface ethernet-1/49
 ```
 
 ```
-    interface ethernet-1/49 {
-        description ndd-ethernet-1/49
+interface ethernet-1/49 {
+    description ndd-ethernet-1/49
+    admin-state enable
+    vlan-tagging true
+    subinterface 1 {
+        type routed
+        description ndd-e1-49-0-leaf1
         admin-state enable
-        vlan-tagging true
-        subinterface 1 {
-            type routed
-            description ndd-e1-49-0-leaf1
-            admin-state enable
-            ipv4 {
-                allow-directed-broadcast false
-                address 100.64.0.0/31 {
-                }
+        ipv4 {
+            allow-directed-broadcast false
+            address 100.64.0.0/31 {
             }
-            ipv6 {
-                address 3100:64::/127 {
-                }
+        }
+        ipv6 {
+            address 3100:64::/127 {
             }
-            vlan {
-                encap {
-                    single-tagged {
-                        vlan-id 1
-                    }
+        }
+        vlan {
+            encap {
+                single-tagged {
+                    vlan-id 1
                 }
             }
         }
     }
+}
 ```
