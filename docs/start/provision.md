@@ -174,11 +174,7 @@ A ndd managed resource has the following attributes:
 file int-e1-49.yaml
 
 ```
-<<<<<<< HEAD
-apiVersion: srl.ndd.yndd.io/v1alpha1
-=======
 apiVersion: srl.nddp.yndd.io/v1alpha1
->>>>>>> d896e49 (added some new docs)
 kind: SrlInterface
 metadata:
   name: int-e1-49
