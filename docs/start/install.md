@@ -45,6 +45,28 @@ Install a kubernetes cluster based on your preferences. Some examples are provid
     minikube getting started can be found here:  https://minikube.sigs.k8s.io/docs/start/
     ```
 
+### Install cert-manager
+
+Install cert-manager to ensure we can manage certificated in the cluster
+
+```
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.7.1/cert-manager.yaml
+```
+
+check if the cert-manager is running
+
+```
+kubectl get pods -n cert-manager
+```
+
+a similar output is expected
+
+```
+NAME                                     READY   STATUS    RESTARTS   AGE
+cert-manager-6d8d6b5dbb-pcdhv            1/1     Running   0          162m
+cert-manager-cainjector-d6cbc4d9-5bcq9   1/1     Running   0          162m
+cert-manager-webhook-5ff8dc9844-45bnm    1/1     Running   0          162m
+```
 ### Install a network device
 
 Install a network device based on your preference. You can use container based labs, real HW or other options. Some examples are provided here for reference. if you have access to a network device through other mean you can skip this step. Also you can enable multiple networking devices.
@@ -134,6 +156,33 @@ kubectl get pods -n ndd-system
 NAME                        READY   STATUS    RESTARTS   AGE
 ndd-core-5dd5b5c679-6hkvw   2/2     Running   0          7m16s
 ndd-rbac-6d8d68dbbc-58rnt   2/2     Running   0          7m16s
+```
+
+### Install a certificate issuer
+
+Install an issuer to manager the certifcates that are being used for the webhooks. We use self-signed certificates for this example
+
+```
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: selfsigned-issuer
+  namespace: ndd-system
+spec:
+  selfSigned: {}
+```
+
+With the following command you can check if the issuer is installed properly
+
+```
+kubectl get issuers -n ndd-system -o wide
+```
+
+Expected output or similar
+
+```
+NAME                READY   STATUS   AGE
+selfsigned-issuer   True             164m
 ```
 
 When all of this succeeded we can starrt provisioning network devices through kubernetes
